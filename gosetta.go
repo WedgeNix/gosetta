@@ -1,3 +1,8 @@
 package gosetta
 
-func New() {}
+type Rose struct {
+}
+
+func New() *Rose {
+  return &Rose{}
+}
