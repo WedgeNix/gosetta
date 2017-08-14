@@ -22,7 +22,7 @@ type Rose struct {
 func New(src language.Tag) (*Rose, error) {
 	key := os.Getenv("TRANSLATE_API_KEY")
 	if len(key) < 1 {
-		return nil, errors.New("missing TRANSLATE_API_KEY")
+		return nil, errors.New("TRANSLATE_API_KEY not found")
 	}
 	ctx := context.Background()
 	cl, err := translate.NewClient(ctx, option.WithAPIKey(key))
