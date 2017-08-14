@@ -1,0 +1,3 @@
+package gosetta
+
+func New() {}
