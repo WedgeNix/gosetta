@@ -12,16 +12,16 @@ import (
 
 // Rose holds translation information.
 type Rose struct {
-	apiKey string
-	ctx    context.Context
-	cl     *translate.Client
-	opts   *translate.Options
+	ctx  context.Context
+	cl   *translate.Client
+	opts *translate.Options
+	dst  language.Tag
 }
 
 // New creates a rose for translating.
 func New(src language.Tag) (*Rose, error) {
-	key := os.Getenv("TRANSLATE_API_KEY")
-	if len(key) < 1 {
+	key, found := os.LookupEnv("TRANSLATE_API_KEY")
+	if !found {
 		return nil, errors.New("TRANSLATE_API_KEY not found")
 	}
 	ctx := context.Background()
@@ -30,7 +30,11 @@ func New(src language.Tag) (*Rose, error) {
 		return nil, err
 	}
 	opts := &translate.Options{Source: src}
-	return &Rose{key, ctx, cl, opts}, nil
+	return &Rose{
+		ctx:  ctx,
+		cl:   cl,
+		opts: opts,
+	}, nil
 }
 
 // Source sets the new source language for the rose.
@@ -38,17 +42,28 @@ func (r *Rose) Source(src language.Tag) {
 	r.opts.Source = src
 }
 
-// Translate moves from input from a source to destination language.
-func (r Rose) Translate(in []string, dst language.Tag) ([]string, error) {
-	// defer wg.Done()
-	trans, err := r.cl.Translate(r.ctx, in, dst, r.opts)
-	if err != nil {
-		return nil, err
-	}
-	lang := []string{}
-	for _, tran := range trans {
-		lang = append(lang, tran.Text)
-	}
-	return lang, nil
+// Destination sets the new destination language for the rose.
+func (r *Rose) Destination(dst language.Tag) {
+	r.dst = dst
+}
 
+// MustTranslate translates from source to destination or else it panics.
+func (r Rose) MustTranslate(x string) string {
+	y, err := r.Translate(x)
+	if err != nil {
+		panic(err)
+	}
+	return y
+}
+
+// Translate moves from input from a source to destination language.
+func (r Rose) Translate(x string) (string, error) {
+	trans, err := r.cl.Translate(r.ctx, []string{x}, r.dst, r.opts)
+	if err != nil {
+		return "", err
+	}
+	if len(trans) != 1 {
+		return "", errors.New("not just one translation")
+	}
+	return trans[0].Text, nil
 }
