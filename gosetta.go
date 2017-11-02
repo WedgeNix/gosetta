@@ -93,6 +93,11 @@ func (r *Rose) Translate(x string) <-chan string {
 	t2t := text2tran{x, make(chan string, 1)}
 	t2ts := <-r.texts2trans
 
+	if r.opts.Source.String() == r.dst.String() {
+		t2t.out <- x
+		return t2t.out
+	}
+
 	if len(t2ts) < 1 {
 		r.texts2trans <- []text2tran{t2t}
 		tick := time.NewTicker(charLim * time.Millisecond)
